@@ -810,13 +810,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 410087039}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalRotation: {x: 0.3564554, y: -0.3075782, z: 0.27306104, w: 0.8389118}
+  m_LocalPosition: {x: -12, y: 23, z: 21}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 21.816}
 --- !u!114 &410087042
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1192,11 +1192,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 404048, guid: 4a4e3f66b8637cc4b881bf8912acff4f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 346.5
+      value: 334.8
       objectReference: {fileID: 0}
     - target: {fileID: 404048, guid: 4a4e3f66b8637cc4b881bf8912acff4f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 210.4
+      value: 215.6
       objectReference: {fileID: 0}
     - target: {fileID: 404048, guid: 4a4e3f66b8637cc4b881bf8912acff4f, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2057,16 +2057,28 @@ PrefabInstance:
       value: Villa2_IntStairs_B
       objectReference: {fileID: 0}
     - target: {fileID: 410572, guid: 4b7d9b40e1557ad478dd49cbeb97696a, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 6.351169
+      objectReference: {fileID: 0}
+    - target: {fileID: 410572, guid: 4b7d9b40e1557ad478dd49cbeb97696a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 6.351169
+      objectReference: {fileID: 0}
+    - target: {fileID: 410572, guid: 4b7d9b40e1557ad478dd49cbeb97696a, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 6.351169
+      objectReference: {fileID: 0}
+    - target: {fileID: 410572, guid: 4b7d9b40e1557ad478dd49cbeb97696a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 518.9667
+      value: 61.4
       objectReference: {fileID: 0}
     - target: {fileID: 410572, guid: 4b7d9b40e1557ad478dd49cbeb97696a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 300.03204
+      value: 299.3
       objectReference: {fileID: 0}
     - target: {fileID: 410572, guid: 4b7d9b40e1557ad478dd49cbeb97696a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 878.2047
+      value: 120.8
       objectReference: {fileID: 0}
     - target: {fileID: 410572, guid: 4b7d9b40e1557ad478dd49cbeb97696a, type: 3}
       propertyPath: m_LocalRotation.w
