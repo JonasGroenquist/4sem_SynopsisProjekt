@@ -1,39 +1,100 @@
 using UnityEngine;
+using StarterAssets; // Add this line to reference the correct namespace
 
 public class SlopePhysics : MonoBehaviour
 {
+    [Header("Slope Settings")]
+    public float maxWalkableSlope = 40f;    // Maximum angle the player can walk on
+    public float slidingSpeed = 10f;        // Base speed for sliding
+    public float slidingAcceleration = 5f;  // How quickly sliding accelerates
+
     private CharacterController controller;
-    public float slopeForce = 15f;
-    public float slopeForceRayLength = 1.5f;
+    private Vector3 moveDirection = Vector3.zero;
+    private bool isSliding = false;
+    private float currentSlideSpeed = 0f;
+
+    // Reference to your main character script - adjust name as needed
+    private ThirdPersonController mainController;
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
+        mainController = GetComponent<ThirdPersonController>();
     }
 
-    void FixedUpdate()
+    void Update()
     {
-        // Only check when grounded
-        if (!controller.isGrounded) return;
+        HandleSlopes();
+    }
 
-        RaycastHit hit;
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, slopeForceRayLength))
+    void HandleSlopes()
+    {
+        if (controller.isGrounded)
         {
-            // Calculate slope angle
-            float angle = Vector3.Angle(hit.normal, Vector3.up);
-
-            // Only apply force on steep slopes
-            if (angle > controller.slopeLimit)
+            RaycastHit hit;
+            if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.5f))
             {
-                // Calculate direction down the slope
-                Vector3 hitNormal = hit.normal;
-                Vector3 slopeDirection = new Vector3(hitNormal.x, -hitNormal.y, hitNormal.z);
+                // Calculate slope angle
+                float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
 
-                Vector3 moveDirection = Vector3.ClampMagnitude(slopeDirection * slopeForce, slopeForce);
-                controller.Move(moveDirection * Time.fixedDeltaTime);
+                // Debug slope info
+                Debug.DrawRay(hit.point, hit.normal * 2f, Color.yellow);
 
-                // Debug visual in Scene view
-                Debug.DrawRay(hit.point, slopeDirection * 2, Color.yellow);
+                // Check if slope is too steep to walk on
+                if (slopeAngle > maxWalkableSlope)
+                {
+                    // We're on a steep slope - start sliding
+                    isSliding = true;
+
+                    // Calculate slide direction (down the slope)
+                    Vector3 slopeDirection = Vector3.Cross(hit.normal, Vector3.Cross(Vector3.up, hit.normal));
+                    slopeDirection.Normalize();
+
+                    // Increase sliding speed over time
+                    currentSlideSpeed = Mathf.MoveTowards(currentSlideSpeed, slidingSpeed, slidingAcceleration * Time.deltaTime);
+
+                    // Set movement direction down the slope
+                    moveDirection = slopeDirection * currentSlideSpeed;
+
+                    // Apply some player control during sliding (optional)
+                    Vector3 playerInput = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+                    playerInput = Camera.main.transform.TransformDirection(playerInput);
+                    playerInput.y = 0; // Keep input horizontal
+                    playerInput.Normalize();
+
+                    // Add slight player influence to the slide direction
+                    moveDirection += playerInput * 2f;
+
+                    // Apply movement
+                    controller.Move(moveDirection * Time.deltaTime);
+
+                    // Alert the main controller that we're handling movement
+                    if (mainController != null)
+                    {
+                        // Call any method in your main controller to disable its movement
+                        // Example: mainController.SetControlEnabled(false);
+                    }
+                }
+                else
+                {
+                    // Reset sliding state
+                    isSliding = false;
+                    currentSlideSpeed = 0f;
+
+                    // Return control to main controller
+                    if (mainController != null)
+                    {
+                        // Example: mainController.SetControlEnabled(true);
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Not grounded, continue sliding if we were sliding
+            if (isSliding)
+            {
+                controller.Move(moveDirection * Time.deltaTime);
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿ using UnityEngine;
+﻿using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
 #endif
@@ -59,6 +59,13 @@ namespace StarterAssets
         [Tooltip("What layers the character uses as ground")]
         public LayerMask GroundLayers;
 
+        [Header("Slope Handling")]
+        [Tooltip("Maximum angle the player can walk on")]
+        public float MaxSlopeAngle = 45f;
+
+        [Tooltip("How fast the player slides down steep slopes")]
+        public float SlidingSpeed = 8f;
+
         [Header("Cinemachine")]
         [Tooltip("The follow target set in the Cinemachine Virtual Camera that the camera will follow")]
         public GameObject CinemachineCameraTarget;
@@ -86,6 +93,10 @@ namespace StarterAssets
         private float _rotationVelocity;
         private float _verticalVelocity;
         private float _terminalVelocity = 53.0f;
+
+        // slope handling
+        private bool _isOnSteepSlope = false;
+        private Vector3 _slopeHitNormal;
 
         // timeout deltatime
         private float _jumpTimeoutDelta;
@@ -117,7 +128,7 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM
                 return _playerInput.currentControlScheme == "KeyboardMouse";
 #else
-				return false;
+                return false;
 #endif
             }
         }
@@ -135,14 +146,14 @@ namespace StarterAssets
         private void Start()
         {
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
-            
+
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
-#if ENABLE_INPUT_SYSTEM 
+#if ENABLE_INPUT_SYSTEM
             _playerInput = GetComponent<PlayerInput>();
 #else
-			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
+            Debug.LogError("Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
 
             AssignAnimationIDs();
@@ -190,6 +201,58 @@ namespace StarterAssets
             }
         }
 
+        private bool CheckSteepSlope()
+        {
+            if (!Grounded) return false;
+
+            RaycastHit hit;
+            if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.5f, GroundLayers))
+            {
+                float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+                _slopeHitNormal = hit.normal;
+
+                // Draw debug rays to visualize slope
+                Debug.DrawRay(hit.point, hit.normal * 2f, Color.yellow);
+
+                // Check if too steep to walk on
+                if (slopeAngle > MaxSlopeAngle)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void HandleSteepSlope()
+        {
+            // Calculate slide direction (down the slope, not up)
+            // This line is the key fix - we're ensuring the direction is downward
+            Vector3 slopeDirection = Vector3.ProjectOnPlane(Vector3.down, _slopeHitNormal).normalized;
+
+            // Calculate slide velocity
+            Vector3 slideMovement = slopeDirection * SlidingSpeed;
+
+            // Apply some player control during sliding
+            if (_input.move != Vector2.zero)
+            {
+                Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+                Vector3 worldInputDir = Quaternion.Euler(0.0f, _mainCamera.transform.eulerAngles.y, 0.0f) * inputDirection;
+
+                // Add a small amount of player input influence
+                slideMovement += worldInputDir * 2f;
+            }
+
+            // Update animator if needed
+            if (_hasAnimator)
+            {
+                _animator.SetFloat(_animIDSpeed, slideMovement.magnitude);
+            }
+
+            // Move the character with slide movement + gravity
+            _controller.Move((slideMovement + new Vector3(0.0f, _verticalVelocity, 0.0f)) * Time.deltaTime);
+        }
+
         private void CameraRotation()
         {
             // if there is an input and camera position is not fixed
@@ -213,6 +276,16 @@ namespace StarterAssets
 
         private void Move()
         {
+            // Check if on steep slope
+            _isOnSteepSlope = CheckSteepSlope();
+
+            // If on steep slope, handle sliding
+            if (_isOnSteepSlope)
+            {
+                HandleSteepSlope();
+                return; // Skip normal movement
+            }
+
             // set target speed based on move speed, sprint speed and if sprint is pressed
             float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
 
